@@ -1,0 +1,294 @@
+from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException, UploadFile, status
+
+from Social.repositories import (
+    ProfileRepository, PostRepository, LikeRepository, CommentRepository,
+    ShareRepository, FollowRepository, StoryRepository, StoryViewRepository,
+    NotificationRepository,
+)
+from Social.media_service import MediaService
+from Social.schemas import ProfileUpdateSchema, PostCreateSchema, CommentCreateSchema, ShareCreateSchema, StoryCreateSchema
+
+STORY_LIFETIME_HOURS = 24
+
+profile_repo = ProfileRepository()
+post_repo = PostRepository()
+like_repo = LikeRepository()
+comment_repo = CommentRepository()
+share_repo = ShareRepository()
+follow_repo = FollowRepository()
+story_repo = StoryRepository()
+story_view_repo = StoryViewRepository()
+notif_repo = NotificationRepository()
+media_service = MediaService()
+
+
+# ==================== PROFILE ====================
+# NOTE: no "create profile" endpoint exists on purpose — a user's Social
+# profile IS their Authentication `users` row. Registering once via
+# Authentication/routers.py::signup is enough; Social only reads/extends it.
+
+class ProfileService:
+    def get_profile(self, user_id: str) -> dict:
+        profile = profile_repo.get_profile(user_id)
+        if not profile:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found.")
+        return profile
+
+    def update_profile(self, user_id: str, schema: ProfileUpdateSchema) -> dict:
+        data = {k: v for k, v in schema.model_dump().items() if v is not None}
+        if not data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to update.")
+        return profile_repo.update_profile(user_id, data)
+
+    def update_avatar(self, user_id: str, file: UploadFile) -> dict:
+        uploaded = media_service.upload_media(file, folder="social/avatars")
+        return profile_repo.update_profile(user_id, {"avatar_url": uploaded["media_url"]})
+
+
+# ==================== POSTS ====================
+
+class PostService:
+    def create_post(self, user_id: str, schema: PostCreateSchema, file: UploadFile) -> dict:
+        uploaded = media_service.upload_media(file, folder="social/posts")
+        post_data = {
+            "user_id": user_id,
+            "caption": schema.caption,
+            "media_type": uploaded["media_type"],
+            "media_url": uploaded["media_url"],
+            "thumbnail_url": uploaded["thumbnail_url"],
+            "media_public_id": uploaded["media_public_id"],
+            "duration_seconds": uploaded["duration_seconds"],
+            "width": uploaded["width"],
+            "height": uploaded["height"],
+            "location_name": schema.location_name,
+            "latitude": schema.latitude,
+            "longitude": schema.longitude,
+        }
+        post = post_repo.create_post(post_data)
+        profile_repo.increment_counter(user_id, "posts_count", +1)
+        # The insert above returns the raw row with no joined author info
+        # (unlike get_feed/search_posts, which select posts.*, users(...)).
+        # Attach it here so the response the client uses to render the new
+        # post immediately has the real username/avatar instead of falling
+        # back to a generic placeholder.
+        author = profile_repo.get_profile(user_id) or {}
+        post["author_username"] = author.get("username")
+        post["author_full_name"] = author.get("full_name")
+        post["author_avatar_url"] = author.get("avatar_url")
+        post["liked_by_me"] = False
+        return post
+
+    def get_feed(self, viewer_id: str, limit: int, offset: int, media_type: str | None = None) -> list[dict]:
+        posts = post_repo.get_feed(limit, offset, media_type)
+        return [self._flatten(p, viewer_id) for p in posts]
+
+    def search_posts(
+        self, viewer_id: str, query_text: str, limit: int, offset: int, media_type: str | None = None
+    ) -> list[dict]:
+        posts = post_repo.search_posts(query_text, limit, offset, media_type)
+        return [self._flatten(p, viewer_id) for p in posts]
+
+    def get_user_posts(self, user_id: str, limit: int, offset: int) -> list[dict]:
+        return post_repo.get_user_posts(user_id, limit, offset)
+
+    @staticmethod
+    def _flatten(post: dict, viewer_id: str) -> dict:
+        """Supabase nested-select returns author info under post['users'];
+        flatten it onto the row and attach whether the viewer liked it,
+        so the frontend gets one flat object per post (see PostFeedResponse).
+        If the embedded join comes back empty (e.g. the users/posts FK
+        relationship isn't set up the way Supabase's PostgREST expects, so
+        the nested select silently returns null), fall back to a direct
+        profile lookup rather than shipping a post with no author info —
+        that's what was causing every post to render as "@traveler"."""
+        author = post.pop("users", None) or {}
+        if not author.get("username") and not author.get("full_name"):
+            author = profile_repo.get_profile(post["user_id"]) or {}
+        post["author_username"] = author.get("username")
+        post["author_full_name"] = author.get("full_name")
+        post["author_avatar_url"] = author.get("avatar_url")
+        post["liked_by_me"] = like_repo.has_liked(post["id"], viewer_id)
+        return post
+
+    def delete_post(self, user_id: str, post_id: str) -> None:
+        post = post_repo.get_post(post_id)
+        if not post:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
+        if post["user_id"] != user_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own posts.")
+        media_service.delete_media(
+            post["media_public_id"],
+            resource_type="video" if post["media_type"] == "video" else "image",
+        )
+        post_repo.soft_delete_post(post_id)
+        profile_repo.increment_counter(user_id, "posts_count", -1)
+
+
+# ==================== LIKES ====================
+
+class LikeService:
+    def like(self, post_id: str, user_id: str) -> dict:
+        post = post_repo.get_post(post_id)
+        if not post:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
+        result = like_repo.like_post(post_id, user_id)
+        if result is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already liked.")
+        post_repo.update_counter(post_id, "likes_count", +1)
+        if post["user_id"] != user_id:
+            notif_repo.create({
+                "recipient_id": post["user_id"], "actor_id": user_id,
+                "type": "like", "post_id": post_id,
+            })
+        return result
+
+    def unlike(self, post_id: str, user_id: str) -> None:
+        removed = like_repo.unlike_post(post_id, user_id)
+        if removed:
+            post_repo.update_counter(post_id, "likes_count", -1)
+
+
+# ==================== COMMENTS ====================
+
+class CommentService:
+    def add_comment(self, post_id: str, user_id: str, schema: CommentCreateSchema) -> dict:
+        post = post_repo.get_post(post_id)
+        if not post:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
+        comment = comment_repo.create_comment({
+            "post_id": post_id,
+            "user_id": user_id,
+            "parent_comment_id": str(schema.parent_comment_id) if schema.parent_comment_id else None,
+            "content": schema.content,
+        })
+        post_repo.update_counter(post_id, "comments_count", +1)
+        if post["user_id"] != user_id:
+            notif_repo.create({
+                "recipient_id": post["user_id"], "actor_id": user_id,
+                "type": "comment", "post_id": post_id, "comment_id": comment["id"],
+            })
+        return comment
+
+    def get_comments(self, post_id: str, limit: int, offset: int) -> list[dict]:
+        return comment_repo.get_comments_for_post(post_id, limit, offset)
+
+    def delete_comment(self, user_id: str, comment_id: str) -> None:
+        comment = comment_repo.get_comment(comment_id)
+        if not comment:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found.")
+        if comment["user_id"] != user_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own comments.")
+        comment_repo.soft_delete_comment(comment_id)
+        post_repo.update_counter(comment["post_id"], "comments_count", -1)
+
+
+# ==================== SHARES ====================
+
+class ShareService:
+    def share_post(self, post_id: str, user_id: str, schema: ShareCreateSchema) -> dict:
+        post = post_repo.get_post(post_id)
+        if not post:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
+        share = share_repo.create_share({
+            "post_id": post_id, "user_id": user_id, "share_type": schema.share_type,
+        })
+        post_repo.update_counter(post_id, "shares_count", +1)
+        if post["user_id"] != user_id:
+            notif_repo.create({
+                "recipient_id": post["user_id"], "actor_id": user_id,
+                "type": "share", "post_id": post_id,
+            })
+        return share
+
+
+# ==================== FOLLOWS ====================
+
+class FollowService:
+    def follow(self, follower_id: str, following_id: str) -> dict:
+        if follower_id == following_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot follow yourself.")
+        result = follow_repo.follow(follower_id, following_id)
+        if result is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already following.")
+        profile_repo.increment_counter(follower_id, "following_count", +1)
+        profile_repo.increment_counter(following_id, "followers_count", +1)
+        notif_repo.create({"recipient_id": following_id, "actor_id": follower_id, "type": "follow"})
+        return result
+
+    def unfollow(self, follower_id: str, following_id: str) -> None:
+        removed = follow_repo.unfollow(follower_id, following_id)
+        if removed:
+            profile_repo.increment_counter(follower_id, "following_count", -1)
+            profile_repo.increment_counter(following_id, "followers_count", -1)
+
+
+# ==================== STORIES ====================
+
+class StoryService:
+    def create_story(self, user_id: str, schema: StoryCreateSchema, file: UploadFile) -> dict:
+        uploaded = media_service.upload_media(file, folder="social/stories")
+        now = datetime.now(timezone.utc)
+        story_data = {
+            "user_id": user_id,
+            "media_type": uploaded["media_type"],
+            "media_url": uploaded["media_url"],
+            "thumbnail_url": uploaded["thumbnail_url"],
+            "media_public_id": uploaded["media_public_id"],
+            "duration_seconds": uploaded["duration_seconds"],
+            "caption": schema.caption,
+            "location_name": schema.location_name,
+            "created_at": now.isoformat(),
+            "expires_at": (now + timedelta(hours=STORY_LIFETIME_HOURS)).isoformat(),
+        }
+        return story_repo.create_story(story_data)
+
+    def get_story_feed(self) -> list[dict]:
+        """Active stories with author info flattened on; router groups them
+        by user for the tray UI (see StoryGroupResponse)."""
+        raw = story_repo.get_active_stories_feed()
+        flattened = []
+        for story in raw:
+            author = story.pop("users", None) or {}
+            story["author_username"] = author.get("username")
+            story["author_full_name"] = author.get("full_name")
+            story["author_avatar_url"] = author.get("avatar_url")
+            flattened.append(story)
+        return flattened
+
+    def get_user_stories(self, user_id: str) -> list[dict]:
+        return story_repo.get_active_stories_for_user(user_id)
+
+    def view_story(self, story_id: str, viewer_id: str) -> None:
+        story = story_repo.get_story(story_id)
+        if not story:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found or expired.")
+        added = story_view_repo.add_view(story_id, viewer_id)
+        if added:
+            from config.database import supabase
+            new_count = story.get("views_count", 0) + 1
+            supabase.table("stories").update({"views_count": new_count}).eq("id", story_id).execute()
+            if story["user_id"] != viewer_id:
+                notif_repo.create({
+                    "recipient_id": story["user_id"], "actor_id": viewer_id,
+                    "type": "story_view", "story_id": story_id,
+                })
+
+    def expire_and_cleanup(self) -> int:
+        """Called by Social/tasks.py on a schedule. Deletes expired story rows
+        AND their Cloudinary media. Returns number of stories cleaned up."""
+        expired = story_repo.get_expired_stories()
+        for story in expired:
+            media_service.delete_media(
+                story["media_public_id"],
+                resource_type="video" if story["media_type"] == "video" else "image",
+            )
+            story_repo.delete_story(story["id"])
+        return len(expired)
+
+
+# ==================== NOTIFICATIONS ====================
+
+class NotificationService:
+    def get_my_notifications(self, user_id: str, limit: int = 30) -> list[dict]:
+        return notif_repo.get_for_user(user_id, limit)

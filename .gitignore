@@ -1,0 +1,11 @@
+# Ignore python virtual environments
+venv/
+.venv/
+env/
+
+# Ignore node modules if it's a web project
+node_modules/
+
+# Ignore your environment configuration file
+.env
+RawanaCeylon-Connected-updated.zip

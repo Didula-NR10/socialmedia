@@ -1,0 +1,115 @@
+@import './variables.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-page);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ---------- App shell ---------- */
+
+.app {
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+
+.app__body {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  gap: 24px;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+  align-items: start;
+}
+
+.app__main {
+  min-width: 0;
+}
+
+/* Two-column layout used inside pages that have their own right rail
+   (Home, Notifications). Pages without one (Explore, Profile, Settings)
+   simply don't render .page-with-rail and take the full width. */
+.page-with-rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rightpanel-width);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1180px) {
+  .page-with-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-with-rail__right {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-with-rail__right > * {
+    flex: 1 1 260px;
+  }
+}
+
+@media (max-width: 860px) {
+  .page-with-rail__right {
+    flex-direction: column;
+  }
+
+  .page-with-rail__right > * {
+    flex: 1 1 auto;
+  }
+}
+
+/* ---------- Scrollbar polish ---------- */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color-strong);
+  border-radius: var(--radius-pill);
+}
+
+/* ---------- Responsive breakpoints ---------- */
+
+/* Tablets / mobile: collapse sidebar to a top drawer, main content takes
+   the full width, bottom nav gets room at the very bottom of the page */
+@media (max-width: 860px) {
+  .app__body {
+    grid-template-columns: 1fr;
+    padding: 0 16px 90px;
+    gap: 16px;
+  }
+}

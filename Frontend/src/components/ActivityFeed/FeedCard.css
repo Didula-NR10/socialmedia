@@ -1,0 +1,140 @@
+.feed-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease;
+}
+
+.feed-card:hover {
+  background: var(--bg-highlight);
+}
+
+.feed-card--highlighted {
+  background: var(--bg-highlight);
+}
+
+.feed-card__media {
+  flex-shrink: 0;
+}
+
+.feed-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-primary-light);
+}
+
+.feed-card__icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.feed-card__text {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.feed-card__bold {
+  font-weight: 600;
+}
+
+.feed-card__link {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.feed-card__link:hover {
+  text-decoration: underline;
+}
+
+.feed-card__time {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.feed-card__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.feed-card__action {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.feed-card__action--primary {
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+}
+
+.feed-card__action--primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.feed-card__action--secondary {
+  background: var(--bg-card);
+  border-color: var(--border-color-strong);
+  color: var(--text-primary);
+}
+
+.feed-card__action--secondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.feed-card__thumbnail {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.feed-card__dot {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+@media (max-width: 480px) {
+  .feed-card {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .feed-card__thumbnail {
+    width: 44px;
+    height: 44px;
+  }
+
+  .feed-card__dot {
+    right: 8px;
+  }
+}

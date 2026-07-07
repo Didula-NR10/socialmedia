@@ -1,0 +1,107 @@
+.explore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.explore__categories {
+  display: flex;
+  gap: 28px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  width: 100%;
+  max-width: 460px;
+  justify-content: center;
+}
+
+.explore__categories::-webkit-scrollbar {
+  display: none;
+}
+
+.explore__category {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 6px 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+}
+
+.explore__category:hover {
+  color: var(--color-primary);
+}
+
+.explore__category--active {
+  color: var(--color-primary);
+  font-weight: 600;
+  border-bottom-color: var(--color-primary);
+}
+
+.explore__reels {
+  width: 100%;
+  max-width: 420px;
+  height: calc(100vh - var(--header-height) - 130px);
+  min-height: 480px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-hover);
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.explore__reels::-webkit-scrollbar {
+  display: none;
+}
+
+.explore__empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 860px) {
+  .explore__reels {
+    max-width: 100%;
+    height: calc(100vh - var(--header-height) - 150px);
+  }
+}
+
+@media (max-width: 480px) {
+  .explore__reels {
+    height: calc(100vh - 210px);
+    min-height: 420px;
+    border-radius: var(--radius-md);
+  }
+}
+
+.explore__search-label {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}
+
+.explore__load-more {
+  margin: 16px auto 0;
+  background: none;
+  border: 1px solid var(--border-color, #ececf3);
+  border-radius: 999px;
+  padding: 8px 20px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.explore__load-more:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}

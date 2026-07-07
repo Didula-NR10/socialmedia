@@ -1,0 +1,130 @@
+.settings {
+  max-width: 640px;
+}
+
+.settings__title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.settings__subtitle {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.settings__section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.settings__section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings__section-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 20px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+}
+
+.settings__row:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings__row--link {
+  color: var(--text-muted);
+}
+
+.settings__row--link:hover {
+  background: var(--bg-highlight);
+}
+
+.settings__row-label {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings__row-desc {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.settings-toggle {
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--border-color-strong);
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s ease;
+}
+
+.settings-toggle__thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.settings-toggle--on {
+  background: var(--color-primary);
+}
+
+.settings-toggle--on .settings-toggle__thumb {
+  transform: translateX(18px);
+}
+
+.settings__logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid var(--border-color-strong, #dcdae8);
+  background: var(--bg-card, #fff);
+  color: #d3311e;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px;
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+}
+
+.settings__logout-btn:hover {
+  background: rgba(211, 49, 30, 0.06);
+  border-color: #d3311e;
+}

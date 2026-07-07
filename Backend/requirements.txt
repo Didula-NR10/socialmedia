@@ -1,0 +1,23 @@
+# ---- copied as-is, needed by Authentication + config/database.py ----
+fastapi~=0.138.2
+uvicorn~=0.49.0
+supabase~=2.31.0
+pydantic~=2.13.4
+pydantic-settings~=2.14.2
+pyjwt~=2.13.0
+python-multipart~=0.0.32
+cryptography~=49.0.0
+psycopg2-binary~=2.9.12
+email-validator~=2.3.0
+python-dotenv~=1.2.2
+
+# Auth's services.py imports passlib (not pwdlib, despite the original
+# requirements.txt) — added here so signup/login actually run standalone.
+# bcrypt is pinned explicitly: passlib 1.7.4 reads bcrypt.__about__, which
+# was removed in bcrypt>=4.1, so an unpinned install breaks signup/login.
+passlib[bcrypt]~=1.7.4
+bcrypt==4.0.1
+
+# ---- added for Social module ----
+cloudinary~=1.41.0
+apscheduler~=3.11.0

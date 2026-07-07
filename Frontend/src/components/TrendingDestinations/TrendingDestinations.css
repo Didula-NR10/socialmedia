@@ -1,0 +1,76 @@
+.trending-dest {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.trending-dest__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.trending-dest__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.trending-dest__see-all {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.trending-dest__see-all:hover {
+  text-decoration: underline;
+}
+
+.trending-dest__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.trending-dest__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin: -4px;
+}
+
+.trending-dest__item:hover {
+  background: var(--bg-highlight);
+}
+
+.trending-dest__thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.trending-dest__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.trending-dest__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.trending-dest__posts {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}

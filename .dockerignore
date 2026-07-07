@@ -1,0 +1,11 @@
+**/.env
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.git
+**/dist
+Frontend/.env
+Backend/.env
+.dockerignore
+Dockerfile
+README.md

@@ -1,0 +1,45 @@
+:root {
+  /* Brand */
+  --color-primary: #7b3fe4;
+  --color-primary-dark: #6528d7;
+  --color-primary-light: #efe9fe;
+  --color-primary-soft: #f4f0fe;
+
+  /* Backgrounds */
+  --bg-page: #f7f6fb;
+  --bg-card: #ffffff;
+  --bg-highlight: #f4f0fe;
+
+  /* Text */
+  --text-primary: #201c33;
+  --text-secondary: #6b6b7b;
+  --text-muted: #9d9dab;
+  --text-on-primary: #ffffff;
+
+  /* Borders */
+  --border-color: #ececf3;
+  --border-color-strong: #dcdae8;
+
+  /* Status */
+  --color-badge: #7b3fe4;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 2px 10px rgba(32, 28, 51, 0.05);
+  --shadow-hover: 0 6px 18px rgba(32, 28, 51, 0.08);
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --rightpanel-width: 320px;
+  --header-height: 76px;
+  --content-max-width: 1440px;
+
+  /* Fonts */
+  --font-display: 'Poppins', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
