@@ -13,7 +13,8 @@ python-dotenv~=1.2.2
 
 # Auth's services.py imports passlib (not pwdlib, despite the original
 # requirements.txt) — added here so signup/login actually run standalone.
-passlib[bcrypt]~=1.7.4
+bcrypt==3.2.2
+passlib[bcrypt]
 
 # ---- added for Social module ----
 cloudinary~=1.41.0
