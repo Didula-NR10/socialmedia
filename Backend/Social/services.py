@@ -291,16 +291,46 @@ class StoryService:
         story = story_repo.get_story(story_id)
         if not story:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found or expired.")
+        if story["user_id"] == viewer_id:
+            # Owner opening their own story isn't a "view" — don't add them
+            # to their own viewers list or bump the count.
+            return
         added = story_view_repo.add_view(story_id, viewer_id)
         if added:
             from config.database import supabase
             new_count = story.get("views_count", 0) + 1
             supabase.table("stories").update({"views_count": new_count}).eq("id", story_id).execute()
-            if story["user_id"] != viewer_id:
-                notif_repo.create({
-                    "recipient_id": story["user_id"], "actor_id": viewer_id,
-                    "type": "story_view", "story_id": story_id,
-                })
+            notif_repo.create({
+                "recipient_id": story["user_id"], "actor_id": viewer_id,
+                "type": "story_view", "story_id": story_id,
+            })
+
+    def get_story_viewers(self, story_id: str, requester_id: str) -> dict:
+        """Owner-only 'who watched my story' list + count. Works even after
+        the story's own 24h window if the row still exists momentarily
+        (cleanup job may not have run yet), since the owner should still be
+        able to see who watched right up until it's actually deleted."""
+        story = story_repo.get_story(story_id)
+        if not story:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found or expired.")
+        if story["user_id"] != requester_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the story's owner can see who watched it.",
+            )
+        raw = story_view_repo.get_viewers(story_id)
+        viewers = []
+        for row in raw:
+            viewer = row.pop("users", None) or {}
+            viewers.append({
+                "id": row["id"],
+                "viewer_id": row["viewer_id"],
+                "viewed_at": row["viewed_at"],
+                "username": viewer.get("username"),
+                "full_name": viewer.get("full_name"),
+                "avatar_url": viewer.get("avatar_url"),
+            })
+        return {"views_count": story.get("views_count", 0), "viewers": viewers}
 
     def expire_and_cleanup(self) -> int:
         """Called by Social/tasks.py on a schedule. Deletes expired story rows

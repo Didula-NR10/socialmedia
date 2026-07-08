@@ -8,7 +8,7 @@ from Social.schemas import (
     PostCreateSchema, PostResponse, PostFeedResponse,
     CommentCreateSchema, CommentResponse,
     ShareCreateSchema,
-    StoryCreateSchema, StoryResponse,
+    StoryCreateSchema, StoryResponse, StoryViewersListResponse,
     NotificationResponse, FollowUserResponse,
 )
 from Social.services import (
@@ -197,6 +197,12 @@ def get_user_stories(user_id: UUID, user=Depends(current_user)):
 @router.post("/stories/{story_id}/view", status_code=status.HTTP_204_NO_CONTENT)
 def view_story(story_id: UUID, user=Depends(current_user)):
     story_service.view_story(str(story_id), user["sub"])
+
+
+@router.get("/stories/{story_id}/viewers", response_model=StoryViewersListResponse)
+def get_story_viewers(story_id: UUID, user=Depends(current_user)):
+    """Owner-only: who watched this story + total view count."""
+    return story_service.get_story_viewers(str(story_id), user["sub"])
 
 
 # ==================== NOTIFICATIONS ====================

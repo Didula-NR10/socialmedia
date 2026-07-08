@@ -281,6 +281,18 @@ class StoryViewRepository:
         )
         return bool(res.data)
 
+    def get_viewers(self, story_id: str) -> list[dict]:
+        """Most-recent-first, with the viewer's profile embedded — same FK
+        embed convention as StoryRepository.get_active_stories_feed."""
+        res = (
+            supabase.table("story_views")
+            .select("id, viewer_id, viewed_at, users(username, full_name, avatar_url)")
+            .eq("story_id", story_id)
+            .order("viewed_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+
 
 # ==================== NOTIFICATIONS ====================
 

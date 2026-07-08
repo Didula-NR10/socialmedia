@@ -151,6 +151,7 @@ export const storiesApi = {
     return request('/api/v1/social/stories', { method: 'POST', body: form })
   },
   view: (storyId) => request(`/api/v1/social/stories/${storyId}/view`, { method: 'POST' }),
+  getViewers: (storyId) => request(`/api/v1/social/stories/${storyId}/viewers`),
 }
 
 // ---------------- Notifications ----------------

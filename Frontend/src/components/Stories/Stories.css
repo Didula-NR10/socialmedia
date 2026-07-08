@@ -44,6 +44,10 @@
   border-style: dashed;
 }
 
+.stories__avatar-btn--self.stories__avatar-btn--has-story {
+  border-style: solid;
+}
+
 .stories__avatar-fallback {
   color: var(--color-primary);
   display: flex;
@@ -62,6 +66,7 @@
   align-items: center;
   justify-content: center;
   border: 2px solid var(--bg-card);
+  cursor: pointer;
 }
 
 .stories__label {

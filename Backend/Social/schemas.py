@@ -164,3 +164,21 @@ class StoryGroupResponse(BaseModel):
     avatar_url: Optional[str] = None
     has_unseen: bool = False
     stories: list[StoryResponse]
+
+
+class StoryViewerResponse(BaseModel):
+    """One row in the 'who watched' list, owner-only."""
+    id: UUID  # story_view row id
+    viewer_id: UUID
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    viewed_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class StoryViewersListResponse(BaseModel):
+    views_count: int
+    viewers: list[StoryViewerResponse]
