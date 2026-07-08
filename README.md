@@ -1,3 +1,14 @@
+---
+title: Socialmedia
+emoji: 🚀
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+---
+
+# Socialmedia Backend
+
 # Rawana Ceylon — Frontend + Backend, connected
 
 This zip contains both halves already wired together over HTTP:
