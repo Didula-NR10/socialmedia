@@ -222,6 +222,27 @@ class FollowService:
             profile_repo.increment_counter(follower_id, "following_count", -1)
             profile_repo.increment_counter(following_id, "followers_count", -1)
 
+    def get_followers(self, user_id: str, viewer_id: str) -> list[dict]:
+        """People who follow `user_id`, each flagged with whether the
+        *viewer* (the logged-in user looking at this list) follows them —
+        that's what drives the Follow/Following button per row."""
+        follower_ids = follow_repo.get_follower_ids(user_id)
+        users = profile_repo.get_users_by_ids(follower_ids)
+        return self._attach_viewer_follow_state(users, viewer_id)
+
+    def get_following(self, user_id: str, viewer_id: str) -> list[dict]:
+        """People `user_id` follows, same viewer-relative flag as above."""
+        following_ids = follow_repo.get_following_ids(user_id)
+        users = profile_repo.get_users_by_ids(following_ids)
+        return self._attach_viewer_follow_state(users, viewer_id)
+
+    @staticmethod
+    def _attach_viewer_follow_state(users: list[dict], viewer_id: str) -> list[dict]:
+        viewer_following_ids = set(follow_repo.get_following_ids(viewer_id))
+        for u in users:
+            u["is_following"] = u["id"] in viewer_following_ids
+        return users
+
 
 # ==================== STORIES ====================
 
@@ -243,10 +264,13 @@ class StoryService:
         }
         return story_repo.create_story(story_data)
 
-    def get_story_feed(self) -> list[dict]:
-        """Active stories with author info flattened on; router groups them
-        by user for the tray UI (see StoryGroupResponse)."""
-        raw = story_repo.get_active_stories_feed()
+    def get_story_feed(self, viewer_id: str) -> list[dict]:
+        """Active stories from the viewer + whoever the viewer follows only
+        — an unfollowed account's stories never appear here, same as
+        Instagram. Author info flattened on; router groups by user for the
+        tray UI (see StoryGroupResponse)."""
+        visible_user_ids = follow_repo.get_following_ids(viewer_id) + [viewer_id]
+        raw = story_repo.get_active_stories_feed(visible_user_ids)
         flattened = []
         for story in raw:
             author = story.pop("users", None) or {}

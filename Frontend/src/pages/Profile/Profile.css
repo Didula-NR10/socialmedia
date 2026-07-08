@@ -328,3 +328,15 @@
     flex-direction: column;
   }
 }
+
+/* --- Added: Followers/Following stats are now buttons that open a list --- */
+.profile__stat--button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.profile__stat--button:hover .profile__stat-value {
+  text-decoration: underline;
+}

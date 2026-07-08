@@ -9,7 +9,7 @@ from Social.schemas import (
     CommentCreateSchema, CommentResponse,
     ShareCreateSchema,
     StoryCreateSchema, StoryResponse,
-    NotificationResponse,
+    NotificationResponse, FollowUserResponse,
 )
 from Social.services import (
     ProfileService, PostService, LikeService, CommentService,
@@ -151,6 +151,20 @@ def unfollow_user(user_id: UUID, user=Depends(current_user)):
     follow_service.unfollow(user["sub"], str(user_id))
 
 
+@router.get("/profile/{user_id}/followers", response_model=list[FollowUserResponse])
+def get_followers(user_id: UUID, user=Depends(current_user)):
+    """People who follow this account. Each row's `is_following` reflects
+    whether the *currently logged-in* user follows that person — drives
+    the Follow/Following button per row in the list."""
+    return follow_service.get_followers(str(user_id), user["sub"])
+
+
+@router.get("/profile/{user_id}/following", response_model=list[FollowUserResponse])
+def get_following(user_id: UUID, user=Depends(current_user)):
+    """People this account follows, same viewer-relative Follow button rule."""
+    return follow_service.get_following(str(user_id), user["sub"])
+
+
 # ==================== STORIES ====================
 
 @router.post("/stories", response_model=StoryResponse, status_code=status.HTTP_201_CREATED)
@@ -167,12 +181,12 @@ def create_story(
 @router.get("/stories/feed")
 def get_story_feed(user=Depends(current_user)):
     """
-    Returns raw active (non-expired) stories with author info attached.
-    Grouping by user for the "tray" UI is intentionally left to the
-    frontend here, since Cloud... err, since it's a one-line `groupBy`
-    client-side and keeps this endpoint simple to test with curl/Postman.
+    Returns active (non-expired) stories from yourself and whoever you
+    follow only — not the whole platform. Grouping by user for the "tray"
+    UI is left to the frontend, since it's a one-line `groupBy` client-side
+    and keeps this endpoint simple to test with curl/Postman.
     """
-    return story_service.get_story_feed()
+    return story_service.get_story_feed(user["sub"])
 
 
 @router.get("/stories/user/{user_id}", response_model=list[StoryResponse])

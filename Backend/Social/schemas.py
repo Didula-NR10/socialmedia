@@ -102,6 +102,20 @@ class FollowResponse(BaseModel):
     created_at: datetime
 
 
+class FollowUserResponse(BaseModel):
+    """One row in a Followers/Following list — enough to render an avatar,
+    name, and a Follow/Following button relative to whoever is viewing it."""
+    id: UUID
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    is_following: bool = False
+
+    class Config:
+        from_attributes = True
+
+
 # ---------- STORIES ----------
 
 class StoryCreateSchema(BaseModel):

@@ -1,9 +1,4 @@
-// `??` (not `||`) matters here: on Hugging Face the Dockerfile builds this
-// with VITE_API_BASE_URL="" on purpose (same-origin — frontend and backend
-// share one domain/port). `||` treats "" as falsy and would wrongly fall
-// back to localhost in production. `??` only falls back when the variable
-// is truly unset (local dev with no .env), which is the intended behavior.
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 const TOKEN_KEY = 'rawana_access_token'
 const ROLE_KEY = 'rawana_role'
@@ -140,6 +135,8 @@ export const postsApi = {
 export const followApi = {
   follow: (userId) => request(`/api/v1/social/follow/${userId}`, { method: 'POST' }),
   unfollow: (userId) => request(`/api/v1/social/follow/${userId}`, { method: 'DELETE' }),
+  getFollowers: (userId) => request(`/api/v1/social/profile/${userId}/followers`),
+  getFollowing: (userId) => request(`/api/v1/social/profile/${userId}/following`),
 }
 
 // ---------------- Stories ----------------

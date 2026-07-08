@@ -25,6 +25,21 @@ class ProfileRepository:
             new_val = max(0, current.data[0][column] + delta)
             supabase.table("users").update({column: new_val}).eq("id", user_id).execute()
 
+    def get_users_by_ids(self, user_ids: list[str]) -> list[dict]:
+        """Batch profile lookup, used for follower/following lists. Two
+        separate queries (follows table, then users table) instead of a
+        PostgREST embed, since `follows` has two FKs into `users` and
+        embedding would need the exact generated constraint name."""
+        if not user_ids:
+            return []
+        res = (
+            supabase.table("users")
+            .select("id, username, full_name, avatar_url, bio")
+            .in_("id", user_ids)
+            .execute()
+        )
+        return res.data or []
+
 
 # ==================== POSTS ====================
 
@@ -183,6 +198,17 @@ class FollowRepository:
         )
         return bool(res.data)
 
+    def get_following_ids(self, user_id: str) -> list[str]:
+        """IDs of everyone `user_id` follows. Used both to filter the story
+        feed and to render the "Following" list."""
+        res = supabase.table("follows").select("following_id").eq("follower_id", user_id).execute()
+        return [row["following_id"] for row in (res.data or [])]
+
+    def get_follower_ids(self, user_id: str) -> list[str]:
+        """IDs of everyone who follows `user_id`. Used for the "Followers" list."""
+        res = supabase.table("follows").select("follower_id").eq("following_id", user_id).execute()
+        return [row["follower_id"] for row in (res.data or [])]
+
 
 # ==================== STORIES ====================
 
@@ -202,12 +228,19 @@ class StoryRepository:
         )
         return res.data or []
 
-    def get_active_stories_feed(self) -> list[dict]:
-        """All non-expired stories, grouped later in the service layer."""
+    def get_active_stories_feed(self, user_ids: list[str]) -> list[dict]:
+        """
+        Non-expired stories, restricted to `user_ids` (the viewer + whoever
+        they follow) so unfollowed accounts' stories never show up in the
+        tray. Grouped by user later in the service layer.
+        """
+        if not user_ids:
+            return []
         now = datetime.now(timezone.utc).isoformat()
         res = (
             supabase.table("stories")
             .select("*, users(username, full_name, avatar_url)")
+            .in_("user_id", user_ids)
             .gt("expires_at", now)
             .order("created_at", desc=True)
             .execute()

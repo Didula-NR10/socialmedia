@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { profileApi, postsApi } from '../../api/client'
 import CreatePostModal from '../../components/CreatePostModal/CreatePostModal'
 import PostViewerModal from '../../components/PostViewerModal/PostViewerModal'
+import FollowListModal from '../../components/FollowListModal/FollowListModal'
 import './Profile.css'
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
 export default function Profile() {
   const { user, refreshProfile } = useAuth()
   const [activeTab, setActiveTab] = useState('posts')
+  const [followModal, setFollowModal] = useState(null) // 'followers' | 'following' | null
   const [posts, setPosts] = useState([])
   const [loadingPosts, setLoadingPosts] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -150,17 +152,29 @@ export default function Profile() {
               <span className="profile__stat-value">{user.posts_count ?? 0}</span>
               <span className="profile__stat-label">Posts</span>
             </div>
-            <div className="profile__stat">
+            <button
+              type="button"
+              className="profile__stat profile__stat--button"
+              onClick={() => setFollowModal('followers')}
+            >
               <span className="profile__stat-value">{user.followers_count ?? 0}</span>
               <span className="profile__stat-label">Followers</span>
-            </div>
-            <div className="profile__stat">
+            </button>
+            <button
+              type="button"
+              className="profile__stat profile__stat--button"
+              onClick={() => setFollowModal('following')}
+            >
               <span className="profile__stat-value">{user.following_count ?? 0}</span>
               <span className="profile__stat-label">Following</span>
-            </div>
+            </button>
           </div>
         </div>
       </div>
+
+      {followModal && (
+        <FollowListModal userId={user.id} mode={followModal} onClose={() => setFollowModal(null)} />
+      )}
 
       <div className="profile__tabs">
         {TABS.map((tab) => {
