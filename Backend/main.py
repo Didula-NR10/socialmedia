@@ -1,4 +1,6 @@
 import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -40,8 +42,9 @@ def health_check():
 
 @app.get("/{catchall:path}")
 def serve_spa(catchall: str):
-    file_path = os.path.join("static", catchall)
+    # Check if the requested file exists in the static folder
+    file_path = os.path.join(STATIC_DIR, catchall)
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return FileResponse(file_path)
-    
-    return FileResponse("static/index.html")
+    # Otherwise, serve index.html for SPA routing
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
