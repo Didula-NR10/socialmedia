@@ -66,6 +66,7 @@ class PostFeedResponse(PostResponse):
     author_full_name: Optional[str] = None
     author_avatar_url: Optional[str] = None
     liked_by_me: bool = False
+    author_is_following: bool = False
 
 
 # ---------- COMMENTS ----------

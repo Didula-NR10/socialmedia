@@ -1,0 +1,38 @@
+.follow-btn {
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--color-primary, #7b3fe4);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.follow-btn--sm {
+  font-size: 12px;
+  padding: 5px 12px;
+}
+
+.follow-btn--md {
+  font-size: 13px;
+  padding: 7px 16px;
+}
+
+.follow-btn--following {
+  background: var(--bg-highlight, #f4f0fe);
+  color: var(--text-primary, #201c33);
+  border: 1px solid var(--border-color-strong, #dcdae8);
+}
+
+.follow-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* On dark video backgrounds (Reels), the light "following" state needs
+   more contrast than it gets sitting on --bg-highlight. */
+.reel .follow-btn--following {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}

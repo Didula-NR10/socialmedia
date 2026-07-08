@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react'
 import { postsApi } from '../../api/client'
+import FollowButton from '../FollowButton/FollowButton'
 import './PostCard.css'
 
 function timeAgo(isoDate) {
@@ -92,6 +93,7 @@ export default function PostCard({ post }) {
             <p className="post-card__author-name">{isUsername ? `@${author}` : author}</p>
             <p className="post-card__location">{post.location_name || timeAgo(post.created_at)}</p>
           </div>
+          <FollowButton userId={post.user_id} initialIsFollowing={!!post.author_is_following} size="sm" />
         </div>
         <button className="post-card__more" aria-label="More options">
           <MoreHorizontal size={20} />

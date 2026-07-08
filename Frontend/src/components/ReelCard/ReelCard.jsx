@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Heart, MessageCircle, Send, Bookmark, Volume2, VolumeX } from 'lucide-react'
 import { postsApi } from '../../api/client'
+import FollowButton from '../FollowButton/FollowButton'
 import './ReelCard.css'
 
 /**
@@ -21,7 +22,8 @@ export default function ReelCard({ post }) {
   const [commentText, setCommentText] = useState('')
   const [loadingComments, setLoadingComments] = useState(false)
 
-  const author = post.author_username || 'traveler'
+  const author = post.author_username || post.author_full_name || 'traveler'
+  const isUsername = !!post.author_username
   const avatar =
     post.author_avatar_url ||
     `https://api.dicebear.com/7.x/shapes/svg?seed=${author}&backgroundColor=7b3fe4`
@@ -102,6 +104,8 @@ export default function ReelCard({ post }) {
       />
       <div className="reel__overlay" />
 
+      {post.location_name && <span className="reel__category">{post.location_name}</span>}
+
       <button
         className="reel__mute"
         onClick={toggleMute}
@@ -115,9 +119,9 @@ export default function ReelCard({ post }) {
           <div className="reel__author-row">
             <img className="reel__avatar" src={avatar} alt="" />
             <div className="reel__author-text">
-              <span className="reel__author-name">@{author}</span>
-              {post.location_name && <span className="reel__location">{post.location_name}</span>}
+              <span className="reel__author-name">{isUsername ? `@${author}` : author}</span>
             </div>
+            <FollowButton userId={post.user_id} initialIsFollowing={!!post.author_is_following} size="sm" />
           </div>
 
           {post.caption && <p className="reel__caption">{post.caption}</p>}

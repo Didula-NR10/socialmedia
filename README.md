@@ -1,13 +1,3 @@
----
-title: Rawana Ceylon
-emoji: 🏝️
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
----
-
 # Rawana Ceylon — Frontend + Backend, connected
 
 This zip contains both halves already wired together over HTTP:
@@ -71,67 +61,6 @@ Runs at `http://localhost:5173`. CORS on the backend is already set to allow thi
   loads the profile via `GET /api/v1/social/profile/me` — this is the "no separate social
   signup" behavior you asked for: one account, fetched into the Social profile section.
 - `Frontend/src/context/ProtectedRoute.jsx` bounces anyone without a valid token to `/login`.
-
-## Deploying to Hugging Face Spaces (free tier)
-
-This repo is set up as a **single Docker Space**: one container builds the
-React frontend and serves it, alongside the FastAPI API, from one process
-on port 7860 (the only port HF Spaces exposes on the free tier).
-
-### 1. Create the Space
-- huggingface.co → New Space → pick a name → **SDK: Docker** → **Hardware: CPU basic (free)**.
-- Push/upload this repo's contents to the Space (git remote, same as pushing to GitHub) —
-  the `Dockerfile` and this `README.md` (with the YAML block at the very top) must sit
-  at the **repo root**.
-
-### 2. Add your Secrets
-In the Space → **Settings → Variables and secrets**, add these as **Secrets**
-(never commit them — `.env` is git-ignored and Docker-ignored on purpose):
-
-```
-SUPABASE_URL
-SUPABASE_KEY
-SUPABASE_DB_URL
-JWT_SECRET
-ENVIRONMENT
-PROJECT_NAME
-SMTP_USER
-SMTP_PASSWORD
-SMTP_FROM_EMAIL
-CLOUDINARY_CLOUD_NAME
-CLOUDINARY_API_KEY
-CLOUDINARY_API_SECRET
-```
-Same values as your local `Backend/.env` — `config/database.py`'s pydantic
-`Settings` reads from real environment variables automatically (the `.env`
-file is just a *local* convenience; on HF, Secrets ARE the environment).
-
-### 3. Build
-HF builds the `Dockerfile` automatically on every push. Build logs are visible
-in the Space's **"Logs"** tab — watch for the same `✅ [SUCCESS] '...' table
-verified/created` lines you see locally, confirming it reached your Supabase
-project.
-
-### What changed in the code for this to work
-- **`Backend/main.py`** — now also serves the built frontend (`./static`,
-  copied in by the Dockerfile) and falls back to `index.html` for any
-  non-`/api/...` path, so React Router's client-side routes (`/profile`,
-  `/explore`, etc.) work on a hard refresh instead of 404ing.
-- **`Frontend/src/api/client.js`** — the base-URL fallback used `||`, which
-  treats an intentionally-empty string (same-origin mode) as "unset" and
-  silently redirected every request to `http://127.0.0.1:8000`. Changed to
-  `??` so an explicitly empty `VITE_API_BASE_URL` (set by the Dockerfile
-  build arg) is respected, letting the frontend call relative paths that
-  resolve to the same container.
-
-### Free tier notes
-- The Space **sleeps after inactivity** and cold-starts on the next visit
-  (typically 20–60s) — this is exactly what `client.js`'s GET-retry-with-backoff
-  logic already covers, so the first request after a sleep won't show a raw error.
-- Storage is **ephemeral** — the container's filesystem resets on every
-  rebuild/restart. This doesn't affect you: all real data lives in Supabase
-  (DB) and Cloudinary (media), never on the container disk.
-- No custom domain/HTTPS setup needed — HF gives you `https://<you>-<space-name>.hf.space` for free.
 
 ## Try it end to end
 1. Start the backend, then the frontend.

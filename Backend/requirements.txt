@@ -13,10 +13,7 @@ python-dotenv~=1.2.2
 
 # Auth's services.py imports passlib (not pwdlib, despite the original
 # requirements.txt) — added here so signup/login actually run standalone.
-# bcrypt is pinned explicitly: passlib 1.7.4 reads bcrypt.__about__, which
-# was removed in bcrypt>=4.1, so an unpinned install breaks signup/login.
 passlib[bcrypt]~=1.7.4
-bcrypt==4.0.1
 
 # ---- added for Social module ----
 cloudinary~=1.41.0

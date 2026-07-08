@@ -77,6 +77,7 @@ class PostService:
         post["author_full_name"] = author.get("full_name")
         post["author_avatar_url"] = author.get("avatar_url")
         post["liked_by_me"] = False
+        post["author_is_following"] = False  # can't follow yourself
         return post
 
     def get_feed(self, viewer_id: str, limit: int, offset: int, media_type: str | None = None) -> list[dict]:
@@ -109,6 +110,9 @@ class PostService:
         post["author_full_name"] = author.get("full_name")
         post["author_avatar_url"] = author.get("avatar_url")
         post["liked_by_me"] = like_repo.has_liked(post["id"], viewer_id)
+        post["author_is_following"] = (
+            follow_repo.is_following(viewer_id, post["user_id"]) if post["user_id"] != viewer_id else False
+        )
         return post
 
     def delete_post(self, user_id: str, post_id: str) -> None:

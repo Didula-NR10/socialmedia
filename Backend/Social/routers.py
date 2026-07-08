@@ -57,7 +57,7 @@ def update_avatar(file: UploadFile = File(...), user=Depends(current_user)):
 
 # ==================== POSTS ====================
 
-@router.post("/posts", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/posts", response_model=PostFeedResponse, status_code=status.HTTP_201_CREATED)
 def create_post(
     file: UploadFile = File(...),
     caption: Optional[str] = Form(None),
