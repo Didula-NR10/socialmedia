@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react'
 import { postsApi } from '../../api/client'
 import FollowButton from '../FollowButton/FollowButton'
+import CommentsSheet from '../CommentsSheet/CommentsSheet'
 import './PostCard.css'
 
 function timeAgo(isoDate) {
@@ -19,9 +20,6 @@ export default function PostCard({ post }) {
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
   const [commentsCount, setCommentsCount] = useState(post.comments_count || 0)
   const [showComments, setShowComments] = useState(false)
-  const [comments, setComments] = useState([])
-  const [commentText, setCommentText] = useState('')
-  const [loadingComments, setLoadingComments] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const author = post.author_username || post.author_full_name || 'traveler'
@@ -47,33 +45,8 @@ export default function PostCard({ post }) {
     }
   }
 
-  async function toggleComments() {
-    const willShow = !showComments
-    setShowComments(willShow)
-    if (willShow && comments.length === 0) {
-      setLoadingComments(true)
-      try {
-        const data = await postsApi.getComments(post.id)
-        setComments(data)
-      } catch {
-        setComments([])
-      } finally {
-        setLoadingComments(false)
-      }
-    }
-  }
-
-  async function submitComment(e) {
-    e.preventDefault()
-    if (!commentText.trim()) return
-    try {
-      const created = await postsApi.addComment(post.id, commentText.trim())
-      setComments((prev) => [...prev, created])
-      setCommentsCount((c) => c + 1)
-      setCommentText('')
-    } catch {
-      // silently ignore for now
-    }
+  function toggleComments() {
+    setShowComments((v) => !v)
   }
 
   async function handleShare() {
@@ -146,24 +119,11 @@ export default function PostCard({ post }) {
         </button>
 
         {showComments && (
-          <div className="post-card__comments-panel">
-            {loadingComments && <p>Loading comments…</p>}
-            {!loadingComments &&
-              comments.map((c) => (
-                <p key={c.id} className="post-card__comment">
-                  {c.content}
-                </p>
-              ))}
-            <form onSubmit={submitComment} className="post-card__comment-form">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Add a comment…"
-              />
-              <button type="submit">Post</button>
-            </form>
-          </div>
+          <CommentsSheet
+            postId={post.id}
+            onClose={() => setShowComments(false)}
+            onCommentPosted={() => setCommentsCount((c) => c + 1)}
+          />
         )}
       </div>
     </article>

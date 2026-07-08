@@ -144,7 +144,7 @@ class CommentRepository:
     def get_comments_for_post(self, post_id: str, limit: int = 50, offset: int = 0) -> list[dict]:
         res = (
             supabase.table("comments")
-            .select("*")
+            .select("*, users(username, full_name, avatar_url)")
             .eq("post_id", post_id)
             .eq("is_deleted", False)
             .order("created_at", desc=False)

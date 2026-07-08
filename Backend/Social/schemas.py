@@ -84,6 +84,9 @@ class CommentResponse(BaseModel):
     content: str
     likes_count: int = 0
     created_at: datetime
+    author_username: Optional[str] = None
+    author_full_name: Optional[str] = None
+    author_avatar_url: Optional[str] = None
 
     class Config:
         from_attributes = True

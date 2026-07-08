@@ -172,10 +172,25 @@ class CommentService:
                 "recipient_id": post["user_id"], "actor_id": user_id,
                 "type": "comment", "post_id": post_id, "comment_id": comment["id"],
             })
+        # A fresh insert has no joined profile data — attach it so the
+        # frontend can render the commenter's name/avatar immediately
+        # without a second round trip.
+        author = profile_repo.get_profile(user_id) or {}
+        comment["author_username"] = author.get("username")
+        comment["author_full_name"] = author.get("full_name")
+        comment["author_avatar_url"] = author.get("avatar_url")
         return comment
 
     def get_comments(self, post_id: str, limit: int, offset: int) -> list[dict]:
-        return comment_repo.get_comments_for_post(post_id, limit, offset)
+        raw = comment_repo.get_comments_for_post(post_id, limit, offset)
+        flattened = []
+        for comment in raw:
+            author = comment.pop("users", None) or {}
+            comment["author_username"] = author.get("username")
+            comment["author_full_name"] = author.get("full_name")
+            comment["author_avatar_url"] = author.get("avatar_url")
+            flattened.append(comment)
+        return flattened
 
     def delete_comment(self, user_id: str, comment_id: str) -> None:
         comment = comment_repo.get_comment(comment_id)

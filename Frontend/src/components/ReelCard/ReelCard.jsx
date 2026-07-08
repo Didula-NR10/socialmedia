@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Heart, MessageCircle, Send, Bookmark, Volume2, VolumeX } from 'lucide-react'
 import { postsApi } from '../../api/client'
 import FollowButton from '../FollowButton/FollowButton'
+import CommentsSheet from '../CommentsSheet/CommentsSheet'
 import './ReelCard.css'
 
 /**
@@ -18,9 +19,6 @@ export default function ReelCard({ post }) {
   const [muted, setMuted] = useState(true)
   const [busy, setBusy] = useState(false)
   const [showComments, setShowComments] = useState(false)
-  const [comments, setComments] = useState([])
-  const [commentText, setCommentText] = useState('')
-  const [loadingComments, setLoadingComments] = useState(false)
 
   const author = post.author_username || post.author_full_name || 'traveler'
   const isUsername = !!post.author_username
@@ -52,33 +50,8 @@ export default function ReelCard({ post }) {
     }
   }
 
-  async function toggleComments() {
-    const willShow = !showComments
-    setShowComments(willShow)
-    if (willShow && comments.length === 0) {
-      setLoadingComments(true)
-      try {
-        const data = await postsApi.getComments(post.id)
-        setComments(data)
-      } catch {
-        setComments([])
-      } finally {
-        setLoadingComments(false)
-      }
-    }
-  }
-
-  async function submitComment(e) {
-    e.preventDefault()
-    if (!commentText.trim()) return
-    try {
-      const created = await postsApi.addComment(post.id, commentText.trim())
-      setComments((prev) => [...prev, created])
-      setCommentsCount((c) => c + 1)
-      setCommentText('')
-    } catch {
-      // silently ignore for now
-    }
+  function toggleComments() {
+    setShowComments((v) => !v)
   }
 
   async function handleShare() {
@@ -151,24 +124,11 @@ export default function ReelCard({ post }) {
       </div>
 
       {showComments && (
-        <div className="reel__comments-panel">
-          {loadingComments && <p>Loading comments…</p>}
-          {!loadingComments &&
-            comments.map((c) => (
-              <p key={c.id} className="reel__comment">
-                {c.content}
-              </p>
-            ))}
-          <form onSubmit={submitComment} className="reel__comment-form">
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment…"
-            />
-            <button type="submit">Post</button>
-          </form>
-        </div>
+        <CommentsSheet
+          postId={post.id}
+          onClose={() => setShowComments(false)}
+          onCommentPosted={() => setCommentsCount((c) => c + 1)}
+        />
       )}
     </section>
   )
